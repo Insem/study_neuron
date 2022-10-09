@@ -1,6 +1,6 @@
 use crate::neuron::{matrix::Matrix, neuron::Neuron};
 
 pub fn start() {
-    let net = Matrix::cr_randomize_net(2, 5);
-    println!("--Matrix: {:?},", net)
+    let net = Matrix::cr_randomize_net(2, 3);
+    println!("--Matrix: {:?},", serde_json::to_string(&net));
 }
