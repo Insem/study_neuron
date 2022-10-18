@@ -1,6 +1,6 @@
-use crate::neuron::{matrix::Matrix, neuron::Neuron};
+use crate::neuron::matrix::Matrix;
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::Result;
 
 pub fn start() -> Result<()> {
     let net = Matrix::cr_randomize_net(2, 3)?;

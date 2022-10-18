@@ -1,3 +1,4 @@
+pub mod equation;
 pub mod neuron;
 pub mod start;
 use log::{error, info, warn};
