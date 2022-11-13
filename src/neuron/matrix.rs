@@ -42,7 +42,7 @@ impl TLayer for Layer {
     }
 }
 impl Matrix {
-    pub fn run(&self)->  Result<Layer> {
+    pub fn run(&self) -> Result<Layer> {
         let v = self.v_projection;
         for n in 1..v.len() {
             let previous = v[n - 1];
@@ -51,7 +51,10 @@ impl Matrix {
             current.set_dendrites(previous.excite());
         }
 
-        Ok(*self.v_projection.last().ok_or(anyhow::anyhow!("No element"))?)
+        Ok(*self
+            .v_projection
+            .last()
+            .ok_or(anyhow::anyhow!("No element"))?)
     }
 
     // Функция для создания матрицы с случайными весами.
