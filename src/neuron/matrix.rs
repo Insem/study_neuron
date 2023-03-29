@@ -6,6 +6,10 @@ use std::sync::Arc;
 pub type Layer = Vec<Arc<Neuron>>;
 pub type Int = i8;
 
+// pub trait ToCastMatrix {
+//     fn summarize<T>(lay: Layer) -> T;
+// }
+
 // Пока думаю создать две проекции нейронной матрицы: вертикальную и горизонтальную.
 // Они будут индентичны и содержать ссылки на одни и те же нейроны.
 // горизонтальная проекция нужна для передачи сигналов от нейронов.
@@ -13,8 +17,25 @@ pub type Int = i8;
 // Можно представить как таблицу, перевёрнутую на 90 градусов.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Matrix {
+    runned: bool,
     v_projection: Vec<Layer>,
     h_projection: Vec<Layer>,
+}
+
+impl Matrix {
+    pub fn new(v: Vec<Layer>, h: Vec<Layer>) -> Self {
+        Matrix {
+            v_projection: v,
+            h_projection: h,
+            runned: false,
+        }
+    }
+    fn set_runned(&mut self, v: bool) {
+        self.runned = v;
+    }
+    fn is_runned(self) -> bool {
+        self.runned
+    }
 }
 trait TLayer {
     fn excite(&self) -> NeuronCalculateType;
@@ -50,13 +71,23 @@ impl Matrix {
 
             current.set_dendrites(previous.excite());
         }
-
+        self.set_runned(true);
         Ok(*self
             .v_projection
             .last()
             .ok_or(anyhow::anyhow!("No element"))?)
     }
-
+    pub fn get_last_layer(&self) -> Result<Layer> {
+        if self.is_runned() {
+            self.set_runned(true);
+            Ok(*self
+                .v_projection
+                .last()
+                .ok_or(anyhow::anyhow!("No element"))?)
+        } else {
+            anyhow::bail!("Net is not runned")
+        }
+    }
     // Функция для создания матрицы с случайными весами.
     pub fn cr_randomize_net(
         v_count: Int,
@@ -87,10 +118,7 @@ impl Matrix {
             v_layer.push(neuron.clone());
         }
 
-        Ok(Matrix {
-            v_projection,
-            h_projection,
-        })
+        Ok(Matrix::new(v_projection, h_projection))
     }
     // Функция для получения первого незаполненного слоя проекции и его индекса
     fn get_not_filled_layer(projection: &mut Vec<Layer>) -> Result<Option<(Int, &mut Layer)>> {
