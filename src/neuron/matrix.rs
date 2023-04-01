@@ -1,5 +1,6 @@
 use super::neuron::{Neuron, NeuronCalculateType};
-use anyhow::{anyhow, Error, Result};
+use anyhow::{anyhow, bail, Error, Result};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -15,18 +16,18 @@ pub type Int = i8;
 // горизонтальная проекция нужна для передачи сигналов от нейронов.
 // Вертикальная нужна для выстраивания нейронной сети.
 // Можно представить как таблицу, перевёрнутую на 90 градусов.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Matrix {
     runned: bool,
     v_projection: Vec<Layer>,
-    h_projection: Vec<Layer>,
+    // h_projection: Vec<Layer>,
 }
 
 impl Matrix {
     pub fn new(v: Vec<Layer>, h: Vec<Layer>) -> Self {
         Matrix {
             v_projection: v,
-            h_projection: h,
+            //  h_projection: h,
             runned: false,
         }
     }
@@ -41,6 +42,8 @@ trait TLayer {
     fn excite(&self) -> NeuronCalculateType;
     fn calculate(container: &mut NeuronCalculateType, val: NeuronCalculateType) {}
     fn set_dendrites(&self, val: NeuronCalculateType) {}
+    fn mix(&mut self, partner_two: &Layer) {}
+    fn mutate(&mut self) {}
 }
 
 impl TLayer for Layer {
@@ -61,6 +64,19 @@ impl TLayer for Layer {
             neuron.set_dendrite(val);
         }
     }
+    fn mix(&mut self, partner_two: &Layer) {
+        *self = partner_two.clone();
+    }
+
+    fn mutate(&mut self) {
+        for neuron in self {
+            if rand::thread_rng().gen_range(0..1) == 1 {
+                *neuron = Arc::new(Neuron::random_new(Some(
+                    rand::thread_rng().gen_range(0.0..1.0),
+                )));
+            }
+        }
+    }
 }
 impl Matrix {
     pub fn run(&self) -> Result<Layer> {
@@ -76,6 +92,25 @@ impl Matrix {
             .v_projection
             .last()
             .ok_or(anyhow::anyhow!("No element"))?)
+    }
+
+    fn mutate(&mut self) {
+        for lay in self.v_projection.iter_mut() {
+            if rand::thread_rng().gen_range(0..1) == 1 {
+                lay.mutate();
+            }
+        }
+    }
+    pub fn sex(&mut self, partner: &Matrix) -> Result<Matrix, anyhow::Error> {
+        let mut lay: usize = 0;
+        let mut child = partner.clone();
+        while lay < self.v_projection.len() {
+            lay += 2;
+            let partner_lay: &Layer = self.v_projection.get_mut(lay).unwrap();
+            let child_lay: &mut Layer = child.v_projection.get_mut(lay).unwrap();
+            child_lay.mix(partner_lay);
+        }
+        Ok(child)
     }
     pub fn get_last_layer(&self) -> Result<Layer> {
         if self.is_runned() {
