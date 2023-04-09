@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub type NeuronCalculateType = f32;
 type T = NeuronCalculateType;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Neuron {
     pub weight: T,
     pub dendrite: Option<T>,
@@ -54,7 +54,7 @@ impl Neuron {
     }
 
     //Функция расчета нейрона
-    pub fn axon(&mut self) -> T {
+    pub fn axon(&self) -> T {
         self.dendrite.unwrap() * self.weight
     }
 }

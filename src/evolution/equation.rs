@@ -18,13 +18,13 @@ impl Population {
     }
 }
 
-fn CastNet(lay: Layer) -> Result<EquationInt> {
-    let mut cast: NeuronCalculateType = 1.0;
-    for v in lay {
-        cast *= v.axon();
-    }
-    Ok((cast * 100.0).trunc() as EquationInt)
-}
+// fn CastNet(lay: Layer) -> Result<EquationInt> {
+//     let mut cast: NeuronCalculateType = 1.0;
+//     for v in lay {
+//         cast *= v.axon();
+//     }
+//     Ok((cast * 100.0).trunc() as EquationInt)
+// }
 
 pub fn equation(
     roots: Vec<NeuronCalculateType>,

@@ -41,14 +41,14 @@ impl Matrix {
 trait TLayer {
     fn excite(&self) -> NeuronCalculateType;
     fn calculate(container: &mut NeuronCalculateType, val: NeuronCalculateType) {}
-    fn set_dendrites(&self, val: NeuronCalculateType) {}
+    fn set_dendrites(&mut self, val: NeuronCalculateType) {}
     fn mix(&mut self, partner_two: &Layer) {}
     fn mutate(&mut self) {}
 }
 
 impl TLayer for Layer {
     fn excite(&self) -> NeuronCalculateType {
-        let mut container: NeuronCalculateType;
+        let mut container: NeuronCalculateType = 0.0;
         for neuron in self.iter() {
             Self::calculate(&mut container, neuron.axon());
         }
@@ -59,9 +59,9 @@ impl TLayer for Layer {
         *container += val;
     }
 
-    fn set_dendrites(&self, val: NeuronCalculateType) {
+    fn set_dendrites(&mut self, val: NeuronCalculateType) {
         for neuron in self.iter_mut() {
-            neuron.set_dendrite(val);
+            Arc::get_mut(neuron).unwrap().set_dendrite(val);
         }
     }
     fn mix(&mut self, partner_two: &Layer) {
@@ -79,13 +79,14 @@ impl TLayer for Layer {
     }
 }
 impl Matrix {
-    pub fn run(&self) -> Result<Layer> {
-        let v = self.v_projection;
+    pub fn run(&mut self) -> Result<Layer> {
+        let v = &mut self.v_projection;
         for n in 1..v.len() {
-            let previous = v[n - 1];
-            let current = v[n];
+            let previous = v.get(n - 1).unwrap();
+            let c = previous.excite();
+            let current = v.get_mut(n).unwrap();
 
-            current.set_dendrites(previous.excite());
+            current.set_dendrites(c);
         }
         self.set_runned(true);
         Ok(*self
