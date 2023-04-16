@@ -31,13 +31,14 @@ pub fn equation(
     equals: EquationInt,
     individuals_count: EquationInt,
 ) -> Result<()> {
-    let population = Population::new();
+    let mut population = Population::new();
 
-    // for i in 1..individuals_count {
-    //     let net = Matrix::cr_randomize_net(3, 4, roots.try_into()?)?;
-    //     net.run();
-    //     population.individuals.push(net);
-    // }
+    for i in 1..individuals_count {
+        let mut net = Matrix::cr_randomize_net(3, 4, roots.clone())?;
+        println!("--Matrix {:?}", net);
+        net.run();
+        population.individuals.push(net);
+    }
 
     // loop {
     //     let diffs: Vec<(EquationInt, &Matrix)> = Vec::new();

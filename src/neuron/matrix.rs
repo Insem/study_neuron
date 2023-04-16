@@ -34,7 +34,7 @@ impl Matrix {
     fn set_runned(&mut self, v: bool) {
         self.runned = v;
     }
-    fn is_runned(self) -> bool {
+    fn is_runned(&self) -> bool {
         self.runned
     }
 }
@@ -79,7 +79,7 @@ impl TLayer for Layer {
     }
 }
 impl Matrix {
-    pub fn run(&mut self) -> Result<Layer> {
+    pub fn run(&mut self) -> Result<&Layer> {
         let v = &mut self.v_projection;
         for n in 1..v.len() {
             let previous = v.get(n - 1).unwrap();
@@ -89,7 +89,7 @@ impl Matrix {
             current.set_dendrites(c);
         }
         self.set_runned(true);
-        Ok(*self
+        Ok(self
             .v_projection
             .last()
             .ok_or(anyhow::anyhow!("No element"))?)
@@ -113,10 +113,10 @@ impl Matrix {
         }
         Ok(child)
     }
-    pub fn get_last_layer(&self) -> Result<Layer> {
+    pub fn get_last_layer(&mut self) -> Result<&Layer> {
         if self.is_runned() {
             self.set_runned(true);
-            Ok(*self
+            Ok(self
                 .v_projection
                 .last()
                 .ok_or(anyhow::anyhow!("No element"))?)
@@ -143,15 +143,15 @@ impl Matrix {
                 Arc::new(Neuron::random_new(None))
             };
             // Берём первый незаполненный слой горизонтальной проекции
-            let (_, h_layer) = Self::get_not_filled_layer(&mut h_projection)?
+            let (_, v_layer) = Self::get_not_filled_layer(&mut v_projection)?
                 .ok_or(anyhow!("There is no empty layer"))?;
             // Добавляем в него нейрон
-            h_layer.push(neuron.clone());
-
-            // Берём слой проекции соответствующий незаполненному слою вертикальной проекции
-            let v_layer = v_projection.get_mut(h_layer.len() - 1).unwrap();
-            // Добавляем в него нейрон
             v_layer.push(neuron.clone());
+
+            // // Берём слой проекции соответствующий незаполненному слою вертикальной проекции
+            // let v_layer = v_projection.get_mut(h_layer.len() - 1).unwrap();
+            // // Добавляем в него нейрон
+            // v_layer.push(neuron.clone());
         }
 
         Ok(Matrix::new(v_projection, h_projection))
