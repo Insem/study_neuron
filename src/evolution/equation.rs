@@ -1,5 +1,5 @@
 use crate::neuron::{
-    matrix::{Layer, Matrix},
+    matrix::{Layer, Matrix, TLayer},
     neuron::NeuronCalculateType,
 };
 use anyhow::{anyhow, Error, Result};
@@ -35,8 +35,9 @@ pub fn equation(
 
     for i in 1..individuals_count {
         let mut net = Matrix::cr_randomize_net(3, 4, roots.clone())?;
-        println!("--Matrix {:?}", net);
-        net.run();
+        let individ: &Layer = net.run().unwrap();
+
+        println!("--I {}, individ {:?}", i, individ.result());
         population.individuals.push(net);
     }
 

@@ -38,12 +38,13 @@ impl Matrix {
         self.runned
     }
 }
-trait TLayer {
+pub trait TLayer {
     fn excite(&self) -> NeuronCalculateType;
     fn calculate(container: &mut NeuronCalculateType, val: NeuronCalculateType) {}
     fn set_dendrites(&mut self, val: NeuronCalculateType) {}
     fn mix(&mut self, partner_two: &Layer) {}
     fn mutate(&mut self) {}
+    fn result(&self) -> Vec<NeuronCalculateType>;
 }
 
 impl TLayer for Layer {
@@ -76,6 +77,14 @@ impl TLayer for Layer {
                 )));
             }
         }
+    }
+
+    fn result(&self) -> Vec<NeuronCalculateType> {
+        let mut arr: Vec<NeuronCalculateType> = Vec::new();
+        for neuron in self {
+            arr.push(neuron.axon());
+        }
+        arr
     }
 }
 impl Matrix {
@@ -115,7 +124,6 @@ impl Matrix {
     }
     pub fn get_last_layer(&mut self) -> Result<&Layer> {
         if self.is_runned() {
-            self.set_runned(true);
             Ok(self
                 .v_projection
                 .last()
