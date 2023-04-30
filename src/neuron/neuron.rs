@@ -51,13 +51,13 @@ impl Neuron {
 
     pub fn set_dendrite(&mut self, dendrite: T) {
         self.dendrite = Some(dendrite);
-        println!("--Dendrite {}", dendrite);
+        //println!("--Dendrite {}", dendrite);
     }
 
     //Функция расчета нейрона
     pub fn axon(&self) -> T {
         let dendr = self.dendrite.unwrap();
-        println!("--Axon {}, {}, {}", dendr, self.weight, dendr * self.weight);
+        //println!("--Axon {}, {}, {}", dendr, self.weight, dendr * self.weight);
         dendr * self.weight
     }
 }

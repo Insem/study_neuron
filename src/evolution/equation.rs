@@ -1,54 +1,148 @@
+use std::sync::Arc;
+
 use crate::neuron::{
     matrix::{Layer, Matrix, TLayer},
     neuron::NeuronCalculateType,
 };
-use anyhow::{anyhow, Error, Result};
+use anyhow::{anyhow, Error, Ok, Result};
 
-type EquationInt = i8;
-
+type EquationInt = i32;
+#[derive(Clone)]
 pub struct Population {
     individuals: Vec<Matrix>,
+    count_fn: fn(NeuronCalculateType) -> EquationInt,
+    roots: Vec<NeuronCalculateType>,
+    equals: EquationInt,
 }
 
 impl Population {
-    pub fn new() -> Self {
+    pub fn new(
+        count_fn: fn(NeuronCalculateType) -> EquationInt,
+        roots: Vec<NeuronCalculateType>,
+        equals: EquationInt,
+    ) -> Self {
         Population {
+            roots,
+            equals,
             individuals: Vec::new(),
+            count_fn,
         }
     }
-}
 
-// fn CastNet(lay: Layer) -> Result<EquationInt> {
-//     let mut cast: NeuronCalculateType = 1.0;
-//     for v in lay {
-//         cast *= v.axon();
-//     }
-//     Ok((cast * 100.0).trunc() as EquationInt)
-// }
+    pub fn natural_selection(&self) -> Result<Vec<(EquationInt, &Matrix)>> {
+        println!("--start Selection");
+        let mut score_arr: Vec<(EquationInt, &Matrix)> = Vec::new();
+        for individ in self.individuals.iter() {
+            if !individ.is_runned() {
+                println!("Matrix is not runned");
+                continue;
+            }
+            let lay = individ.get_last_layer()?.result();
+            let a = (self.count_fn)(*lay.get(0).unwrap());
+            let b = (self.count_fn)(*lay.get(1).unwrap());
+            let c = (self.count_fn)(*lay.get(2).unwrap());
+            let d = (self.count_fn)(*lay.get(3).unwrap());
+
+            let score = self.check_result(a, b, c, d);
+
+            score_arr.push((score, individ));
+        }
+        score_arr.sort_by(|a, b| a.0.cmp(&b.0));
+        score_arr
+            .iter()
+            .for_each(|it| println!("--Sort arr {:?}", it.0));
+
+        Ok(score_arr)
+    }
+
+    pub fn check_result(
+        &self,
+        a: EquationInt,
+        b: EquationInt,
+        c: EquationInt,
+        d: EquationInt,
+    ) -> EquationInt {
+        let neuro_result = 1 * a + 2 * b + 3 * c + 4 * d;
+        // println!(
+        //     "--Calc a: {}, b:{}, c:{}, d:{}, res {}, res_fn {}",
+        //     a,
+        //     b,
+        //     c,
+        //     d,
+        //     neuro_result,
+        //     (self.equals - neuro_result).abs()
+        // );
+        (self.equals - neuro_result).abs()
+    }
+}
 
 pub fn equation(
     roots: Vec<NeuronCalculateType>,
     equals: EquationInt,
     individuals_count: EquationInt,
 ) -> Result<()> {
-    let mut population = Population::new();
+    let mut _population: Population = Population::new(
+        |num| -> EquationInt { (num).trunc() as EquationInt },
+        roots.clone(),
+        equals,
+    );
 
-    for i in 1..individuals_count {
-        let mut net = Matrix::cr_randomize_net(3, 4, roots.clone())?;
+    for i in 0..individuals_count {
+        let mut net = Matrix::cr_randomize_net(4, 4, roots.clone())?;
         let individ: &Layer = net.run().unwrap();
 
         println!("--I {}, individ {:?}", i, individ.result());
-        population.individuals.push(net);
+        _population.individuals.push(net);
     }
 
-    // loop {
-    //     let diffs: Vec<(EquationInt, &Matrix)> = Vec::new();
-    //     for matrix in population.individuals {
-    //         let diff = CastNet(matrix.get_last_layer()?)? - equals;
-    //         diffs.push((diff, &matrix));
-    //     }
-    //     diffs.sort_by(|a, b| b.age.cmp(&a.age));
-    // }
+    let mut population = _population.clone();
+    loop {
+        let selection = population.natural_selection()?;
+        match is_end(&selection) {
+            Some(v) => {
+                println!("END!!! {:?}", v.1);
+                break;
+            }
+            None => (),
+        };
+
+        population = sex_population(
+            roots.clone(),
+            selection,
+            Population::new(
+                |num| -> EquationInt { (num).trunc() as EquationInt },
+                roots.clone(),
+                equals,
+            ),
+        )?;
+    }
 
     Ok(())
+}
+
+fn is_end(selection: &Vec<(EquationInt, &Matrix)>) -> std::option::Option<(i32, Vec<f32>)> {
+    selection.iter().find_map(|it| {
+        if it.0 == 0 {
+            Some((it.0, it.1.get_last_layer().unwrap().result()))
+        } else {
+            None
+        }
+    })
+}
+
+fn sex_population(
+    roots: Vec<NeuronCalculateType>,
+    selection: Vec<(EquationInt, &Matrix)>,
+    mut population: Population,
+) -> Result<Population> {
+    let parent_one = selection.get(0).unwrap().1;
+    let parent_two = selection.get(1).unwrap().1;
+    let child = parent_one.sex(parent_two)?;
+    let mut net = Matrix::cr_randomize_net(4, 4, roots.clone())?;
+    net.run();
+    population.individuals.push(parent_one.clone());
+    population.individuals.push(parent_two.clone());
+    population.individuals.push(child);
+    population.individuals.push(net);
+    Ok(population)
 }

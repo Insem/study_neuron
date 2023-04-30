@@ -34,7 +34,7 @@ impl Matrix {
     fn set_runned(&mut self, v: bool) {
         self.runned = v;
     }
-    fn is_runned(&self) -> bool {
+    pub fn is_runned(&self) -> bool {
         self.runned
     }
 }
@@ -111,18 +111,19 @@ impl Matrix {
             }
         }
     }
-    pub fn sex(&mut self, partner: &Matrix) -> Result<Matrix, anyhow::Error> {
+    pub fn sex(&self, partner: &Matrix) -> Result<Matrix, anyhow::Error> {
         let mut lay: usize = 0;
         let mut child = partner.clone();
         while lay < self.v_projection.len() {
-            lay += 2;
-            let partner_lay: &Layer = self.v_projection.get_mut(lay).unwrap();
+            //println!("--SEX {:?} {:?}", self.v_projection, lay);
+            let partner_lay: &Layer = self.v_projection.get(lay).unwrap();
             let child_lay: &mut Layer = child.v_projection.get_mut(lay).unwrap();
             child_lay.mix(partner_lay);
+            lay += 1;
         }
         Ok(child)
     }
-    pub fn get_last_layer(&mut self) -> Result<&Layer> {
+    pub fn get_last_layer(&self) -> Result<&Layer> {
         if self.is_runned() {
             Ok(self
                 .v_projection
@@ -139,10 +140,12 @@ impl Matrix {
         input: Vec<NeuronCalculateType>,
     ) -> Result<Matrix> {
         let mut v_projection = Self::cr_empty_projection(h_count, v_count)?;
-        let mut h_projection = Self::cr_empty_projection(v_count, h_count)?;
+        let h_projection = Self::cr_empty_projection(v_count, h_count)?;
 
         for i in 0..(v_count * h_count) {
             //Создаём нейрон со случайным весом
+
+            //todo
             let neuron = if i < input.len().try_into()? {
                 Arc::new(Neuron::random_new(Some(
                     *input.get(i as usize).ok_or(anyhow::anyhow!("No element"))?,

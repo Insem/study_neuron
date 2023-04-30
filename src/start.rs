@@ -3,6 +3,6 @@ use crate::{evolution::equation::equation, neuron::matrix::Matrix};
 use anyhow::Result;
 
 pub fn start() -> Result<()> {
-    equation(vec![3.0, 5.0, 6.0], 70, 4);
+    equation(vec![1.0, 2.0, 3.0, 4.0], 30, 4);
     Ok(())
 }
