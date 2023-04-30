@@ -42,7 +42,7 @@ impl Population {
             let b = (self.count_fn)(*lay.get(1).unwrap());
             let c = (self.count_fn)(*lay.get(2).unwrap());
             let d = (self.count_fn)(*lay.get(3).unwrap());
-
+            //println!("")
             let score = self.check_result(a, b, c, d);
 
             score_arr.push((score, individ));
@@ -96,11 +96,14 @@ pub fn equation(
     }
 
     let mut population = _population.clone();
+    let mut i = 0;
     loop {
+        i += 1;
+        println!("START NEW POPULATION");
         let selection = population.natural_selection()?;
         match is_end(&selection) {
             Some(v) => {
-                println!("END!!! {:?}", v.1);
+                println!("END!!! POPULATION COUNT {:?}, RES {:?}", i, v.1);
                 break;
             }
             None => (),
