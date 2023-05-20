@@ -13,6 +13,7 @@ pub struct Population {
     count_fn: fn(NeuronCalculateType) -> EquationInt,
     roots: Vec<NeuronCalculateType>,
     equals: EquationInt,
+    score_result: Option<Vec<EquationInt>>,
 }
 
 impl Population {
@@ -27,12 +28,16 @@ impl Population {
             equals,
             individuals: Vec::new(),
             count_fn,
+            score_result: None,
         }
     }
-
-    pub fn natural_selection(&self) -> Result<Vec<(EquationInt, &Matrix)>> {
+    pub fn get_score(&mut self) -> Option<&Vec<EquationInt>> {
+        self.score_result.as_ref()
+    }
+    pub fn natural_selection(&mut self) -> Result<Vec<(EquationInt, &Matrix)>> {
         println!("--start Selection");
         let mut score_arr: Vec<(EquationInt, &Matrix)> = Vec::new();
+        let mut score_index_arr: Vec<EquationInt> = Vec::new();
         for individ in self.individuals.iter() {
             if !individ.is_runned() {
                 println!("Matrix is not runned");
@@ -47,11 +52,13 @@ impl Population {
             let score = self.check_result(a, b, c, d);
 
             score_arr.push((score, individ));
+            score_index_arr.push(score);
         }
+        self.score_result = Some(score_index_arr);
         score_arr.sort_by(|a, b| a.0.cmp(&b.0));
-        score_arr
-            .iter()
-            .for_each(|it| println!("--Sort arr {:?}", it.0));
+        // score_arr
+        // .iter()
+        // .for_each(|it| println!("--Sort arr {:?}", it.0));
 
         Ok(score_arr)
     }
@@ -97,11 +104,14 @@ pub fn equation(
     }
 
     let mut population = _population.clone();
+    let mut population_cache = _population.clone();
+    let mut score_cache: Vec<EquationInt> = Vec::new();
     let mut i = 0;
     loop {
         i += 1;
         println!("START NEW POPULATION");
         let selection = population.natural_selection()?;
+        let score: Vec<EquationInt> = selection.iter().map(|i| i.0).collect();
         match is_end(&selection) {
             Some(v) => {
                 println!(
@@ -116,13 +126,25 @@ pub fn equation(
 
         population = sex_population(
             roots.clone(),
-            selection,
+            selection.clone(),
             Population::new(
                 |num| -> EquationInt { (num).trunc() as EquationInt },
                 roots.clone(),
                 equals,
             ),
         )?;
+        if i > 1 && is_bad_population(&score, &score_cache) {
+            println!(
+                "Population is bad, reverse. old: {:?}, new:{:?}",
+                score_cache, score
+            );
+            population = population_cache.clone();
+            continue;
+        } else {
+            population_cache = population.clone();
+            println!("Set score_cache {:?}", score);
+            score_cache = score;
+        }
     }
 
     Ok(())
@@ -136,6 +158,13 @@ fn is_end(selection: &Vec<(EquationInt, &Matrix)>) -> std::option::Option<(i32, 
             None
         }
     })
+}
+
+fn is_bad_population(selection: &Vec<EquationInt>, selection_old: &Vec<EquationInt>) -> bool {
+    let index: i32 = selection.iter().sum();
+    let old_index: i32 = selection_old.iter().sum();
+
+    index > old_index
 }
 
 fn sex_population(
