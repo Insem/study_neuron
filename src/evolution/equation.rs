@@ -18,8 +18,7 @@ pub struct Population {
 
 impl Population {
     pub fn new(
-        count_fn: fn(NeuronC
-            alculateType) -> EquationInt,
+        count_fn: fn(NeuronCalculateType) -> EquationInt,
         roots: Vec<NeuronCalculateType>,
         equals: EquationInt,
     ) -> Self {
@@ -109,9 +108,9 @@ pub fn equation(
     let mut i = 0;
     loop {
         i += 1;
-        println!("START NEW POPULATION");
+        println!("START NEW POPULATION {:?}", i);
         let selection = population.natural_selection()?;
-        let score: Vec<EquationInt> = selection.iter().map(|i| i.0).collect();
+        let mut score: Vec<EquationInt> = selection.iter().map(|i| i.0).collect();
         match is_end(&selection) {
             Some(v) => {
                 println!(
@@ -133,6 +132,12 @@ pub fn equation(
                 equals,
             ),
         )?;
+
+        score = population
+            .natural_selection()?
+            .iter()
+            .map(|i| i.0)
+            .collect();
         if i > 1 && is_bad_population(&score, &score_cache) {
             println!(
                 "Population is bad, reverse. old: {:?}, new:{:?}",
@@ -163,7 +168,7 @@ fn is_end(selection: &Vec<(EquationInt, &Matrix)>) -> std::option::Option<(i32, 
 fn is_bad_population(selection: &Vec<EquationInt>, selection_old: &Vec<EquationInt>) -> bool {
     let index: i32 = selection.iter().sum();
     let old_index: i32 = selection_old.iter().sum();
-
+    println!("--Old: {:?}, new: {:?}", old_index, index);
     index > old_index
 }
 
