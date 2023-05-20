@@ -17,8 +17,7 @@ pub struct Population {
 
 impl Population {
     pub fn new(
-        count_fn: fn(NeuronC
-            alculateType) -> EquationInt,
+        count_fn: fn(NeuronCalculateType) -> EquationInt,
         roots: Vec<NeuronCalculateType>,
         equals: EquationInt,
     ) -> Self {
