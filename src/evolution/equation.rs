@@ -17,7 +17,8 @@ pub struct Population {
 
 impl Population {
     pub fn new(
-        count_fn: fn(NeuronCalculateType) -> EquationInt,
+        count_fn: fn(NeuronC
+            alculateType) -> EquationInt,
         roots: Vec<NeuronCalculateType>,
         equals: EquationInt,
     ) -> Self {
@@ -103,7 +104,11 @@ pub fn equation(
         let selection = population.natural_selection()?;
         match is_end(&selection) {
             Some(v) => {
-                println!("END!!! POPULATION COUNT {:?}, RES {:?}", i, v.1);
+                println!(
+                    "END!!! POPULATION COUNT {:?}, RES {:?}",
+                    i,
+                    v.1.iter().map(|num| num.trunc()).collect::<Vec<f32>>()
+                );
                 break;
             }
             None => (),
