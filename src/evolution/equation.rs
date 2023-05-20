@@ -87,7 +87,7 @@ pub fn equation(
     roots: Vec<NeuronCalculateType>,
     equals: EquationInt,
     individuals_count: EquationInt,
-) -> Result<()> {
+) -> Result<i32> {
     let mut _population: Population = Population::new(
         |num| -> EquationInt { (num).trunc() as EquationInt },
         roots.clone(),
@@ -118,7 +118,7 @@ pub fn equation(
                     i,
                     v.1.iter().map(|num| num.trunc()).collect::<Vec<f32>>()
                 );
-                break;
+                return Ok(i);
             }
             None => (),
         };
@@ -152,7 +152,7 @@ pub fn equation(
         }
     }
 
-    Ok(())
+    anyhow!("dfgdfgdfg");
 }
 
 fn is_end(selection: &Vec<(EquationInt, &Matrix)>) -> std::option::Option<(i32, Vec<f32>)> {
