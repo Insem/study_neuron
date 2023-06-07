@@ -1,11 +1,11 @@
 use super::neuron::{Neuron, NeuronCalculateType};
-use anyhow::{anyhow, bail, Error, Result};
+use anyhow::{anyhow, bail, Result};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 pub type Layer = Vec<Arc<Neuron>>;
-pub type Int = i8;
+pub type Int = i32;
 
 // pub trait ToCastMatrix {
 //     fn summarize<T>(lay: Layer) -> T;
@@ -20,15 +20,15 @@ pub type Int = i8;
 pub struct Matrix {
     runned: bool,
     v_projection: Vec<Layer>,
-    // h_projection: Vec<Layer>,
+    size: (Int, Int), // h_projection: Vec<Layer>,
 }
 
 impl Matrix {
-    pub fn new(v: Vec<Layer>, h: Vec<Layer>) -> Self {
+    pub fn new(v: Vec<Layer>, size: (Int, Int)) -> Self {
         Matrix {
             v_projection: v,
-            //  h_projection: h,
             runned: false,
+            size,
         }
     }
     fn set_runned(&mut self, v: bool) {
@@ -37,12 +37,15 @@ impl Matrix {
     pub fn is_runned(&self) -> bool {
         self.runned
     }
+    pub fn get_size(&self) -> (Int, Int) {
+        self.size
+    }
 }
 pub trait TLayer {
     fn excite(&self) -> NeuronCalculateType;
-    fn calculate(container: &mut NeuronCalculateType, val: NeuronCalculateType) {}
-    fn set_dendrites(&mut self, val: NeuronCalculateType) {}
-    fn mix(&mut self, partner_two: &Layer) {}
+    fn calculate(_container: &mut NeuronCalculateType, _val: NeuronCalculateType) {}
+    fn set_dendrites(&mut self, _val: NeuronCalculateType) {}
+    fn mix(&mut self, _partner_two: &Layer) {}
     fn mutate(&mut self) {}
     fn result(&self) -> Vec<NeuronCalculateType>;
 }
@@ -112,14 +115,15 @@ impl Matrix {
         }
     }
     pub fn sex(&self, partner: &Matrix) -> Result<Matrix, anyhow::Error> {
-        let mut lay: usize = 0;
+        if self.size != partner.size {
+            bail!("Matrix sizes are not the same")
+        }
+
         let mut child = partner.clone();
-        while lay < self.v_projection.len() {
-            //println!("--SEX {:?} {:?}", self.v_projection, lay);
+        for lay in 0..self.v_projection.len() {
             let partner_lay: &Layer = self.v_projection.get(lay).unwrap();
             let child_lay: &mut Layer = child.v_projection.get_mut(lay).unwrap();
             child_lay.mix(partner_lay);
-            lay += 1;
         }
         Ok(child)
     }
@@ -134,22 +138,17 @@ impl Matrix {
         }
     }
     // Функция для создания матрицы с случайными весами.
-    pub fn cr_randomize_net(
-        v_count: Int,
-        h_count: Int,
-        input: Vec<NeuronCalculateType>,
-    ) -> Result<Matrix> {
+    pub fn cr_randomize_net(v_count: Int, h_count: Int, input: Vec<Int>) -> Result<Matrix> {
         let mut v_projection = Self::cr_empty_projection(h_count, v_count)?;
-        let h_projection = Self::cr_empty_projection(v_count, h_count)?;
 
         for i in 0..(v_count * h_count) {
             //Создаём нейрон со случайным весом
 
             //todo
             let neuron = if i < input.len().try_into()? {
-                Arc::new(Neuron::random_new(Some(
+                Arc::new(Neuron::random_new(Some(NeuronCalculateType::try_from(
                     *input.get(i as usize).ok_or(anyhow::anyhow!("No element"))?,
-                )))
+                )?)))
             } else {
                 Arc::new(Neuron::random_new(None))
             };
@@ -165,7 +164,7 @@ impl Matrix {
             // v_layer.push(neuron.clone());
         }
 
-        Ok(Matrix::new(v_projection, h_projection))
+        Ok(Matrix::new(v_projection, (v_count, h_count)))
     }
     // Функция для получения первого незаполненного слоя проекции и его индекса
     fn get_not_filled_layer(projection: &mut Vec<Layer>) -> Result<Option<(Int, &mut Layer)>> {
